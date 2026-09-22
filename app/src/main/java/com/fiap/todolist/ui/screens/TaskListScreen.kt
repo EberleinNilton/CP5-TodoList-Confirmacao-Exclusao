@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fiap.todolist.model.Task
 import com.fiap.todolist.model.TaskSort
+import com.fiap.todolist.ui.components.DeleteConfirmationDialog
 import com.fiap.todolist.ui.components.TaskEditorDialog
 import com.fiap.todolist.ui.components.TaskItem
 import com.fiap.todolist.ui.theme.CP5TodoListTheme
@@ -53,7 +54,9 @@ fun TaskListRoute(
         onAddTask = viewModel::openNewTaskEditor,
         onEditTask = viewModel::openEditTaskEditor,
         onToggleCompleted = viewModel::toggleCompleted,
-        onDeleteTask = viewModel::deleteTask,
+        onRequestDelete = viewModel::requestDelete,
+        onCancelDelete = viewModel::cancelDelete,
+        onConfirmDelete = viewModel::confirmDelete,
         onDismissEditor = viewModel::closeTaskEditor,
         onSaveTask = viewModel::saveTask,
         onSortChange = viewModel::changeSort
@@ -67,7 +70,9 @@ fun TaskListScreen(
     onAddTask: () -> Unit,
     onEditTask: (Task) -> Unit,
     onToggleCompleted: (Long) -> Unit,
-    onDeleteTask: (Long) -> Unit,
+    onRequestDelete: (Task) -> Unit,
+    onCancelDelete: () -> Unit,
+    onConfirmDelete: () -> Unit,
     onDismissEditor: () -> Unit,
     onSaveTask: (String, String, LocalDate?) -> Unit,
     onSortChange: (TaskSort) -> Unit
@@ -145,11 +150,19 @@ fun TaskListScreen(
                         task = task,
                         onToggleCompleted = { onToggleCompleted(task.id) },
                         onEdit = { onEditTask(task) },
-                        onDelete = { onDeleteTask(task.id) }
+                        onDelete = { onRequestDelete(task) }
                     )
                 }
             }
         }
+    }
+
+    state.taskPendingDeletion?.let { task ->
+        DeleteConfirmationDialog(
+            task = task,
+            onDismiss = onCancelDelete,
+            onConfirm = onConfirmDelete
+        )
     }
 
     if (state.isTaskEditorOpen) {
@@ -207,7 +220,42 @@ private fun TaskListPreview() {
             onAddTask = {},
             onEditTask = {},
             onToggleCompleted = {},
-            onDeleteTask = {},
+            onRequestDelete = {},
+            onCancelDelete = {},
+            onConfirmDelete = {},
+            onDismissEditor = {},
+            onSaveTask = { _, _, _ -> },
+            onSortChange = {}
+        )
+    }
+}
+
+@Preview(
+    name = "Lista com confirmação de exclusão",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+private fun TaskListDeleteConfirmationPreview() {
+    val selected = Task(
+        id = 20L,
+        title = "Enviar trabalho na FIAP",
+        description = "Conferir o repositório antes da entrega",
+        dueDate = LocalDate.now().plusDays(1)
+    )
+
+    CP5TodoListTheme(dynamicColor = false) {
+        TaskListScreen(
+            state = TaskUiState(
+                tasks = listOf(selected),
+                taskPendingDeletion = selected
+            ),
+            onAddTask = {},
+            onEditTask = {},
+            onToggleCompleted = {},
+            onRequestDelete = {},
+            onCancelDelete = {},
+            onConfirmDelete = {},
             onDismissEditor = {},
             onSaveTask = { _, _, _ -> },
             onSortChange = {}

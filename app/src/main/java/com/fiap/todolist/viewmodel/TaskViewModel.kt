@@ -73,8 +73,18 @@ class TaskViewModel(
         refreshTasks()
     }
 
-    fun deleteTask(taskId: Long) {
-        repository.deleteTask(taskId)
+    fun requestDelete(task: Task) {
+        _uiState.value = _uiState.value.copy(taskPendingDeletion = task)
+    }
+
+    fun cancelDelete() {
+        _uiState.value = _uiState.value.copy(taskPendingDeletion = null)
+    }
+
+    fun confirmDelete() {
+        val task = _uiState.value.taskPendingDeletion ?: return
+        repository.deleteTask(task.id)
+        _uiState.value = _uiState.value.copy(taskPendingDeletion = null)
         refreshTasks()
     }
 
